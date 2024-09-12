@@ -1,4 +1,4 @@
-package com.awesomeproject
+package com.location_sharing_app_mark2
 
 import android.app.Application
 import com.facebook.react.PackageList

@@ -1,12 +1,13 @@
 import firebase from '@react-native-firebase/app';
 
 const firebaseConfig = {
-  apiKey: 'AIzaSyBlYqvkBNrBqxR-bsdGNS4JLUKU6pR0HyY',
-  authDomain: 'flavour-ba610.firebaseapp.com',
-  projectId: 'flavour-ba610',
-  storageBucket: 'flavour-ba610.appspot.com',
-  messagingSenderId: '1079342389440',
-  appId: '1:1079342389440:web:a027234653ec54fbaa7525',
+  apiKey: 'AIzaSyCswMQm_hFMpKTi-RIRgAur5uNAiUCxOQU',
+  authDomain: 'cadenalocationsharingrn.firebaseapp.com',
+  projectId: 'cadenalocationsharingrn',
+  storageBucket: 'cadenalocationsharingrn.appspot.com',
+  messagingSenderId: '719282494144',
+  appId: '1:719282494144:web:e6f456d85b6676eb6eab25',
+  measurementId: 'G-PLEFHWQK80',
 };
 
 // if (!firebase.apps.length) {

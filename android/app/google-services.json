@@ -1,43 +1,26 @@
 {
   "project_info": {
-    "project_number": "1079342389440",
-    "project_id": "flavour-ba610",
-    "storage_bucket": "flavour-ba610.appspot.com"
+    "project_number": "719282494144",
+    "project_id": "cadenalocationsharingrn",
+    "storage_bucket": "cadenalocationsharingrn.appspot.com"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:1079342389440:android:73021352d57f89e7aa7525",
+        "mobilesdk_app_id": "1:719282494144:android:0f7a6754db774a0f6eab25",
         "android_client_info": {
-          "package_name": "com.awesomeproject"
+          "package_name": "com.location_sharing_app_mark2"
         }
       },
-      "oauth_client": [
-        {
-          "client_id": "1079342389440-7741leo2ovcok1bbcohfgo3f4lrbdatr.apps.googleusercontent.com",
-          "client_type": 3
-        }
-      ],
+      "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyC4gHWkSAkUydRP-h_5xA5ktcZ7aMn_rNc"
+          "current_key": "AIzaSyAhAEo1XqhmeNNUSYhRiMR0qgz1oC5hI6w"
         }
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": [
-            {
-              "client_id": "1079342389440-7741leo2ovcok1bbcohfgo3f4lrbdatr.apps.googleusercontent.com",
-              "client_type": 3
-            },
-            {
-              "client_id": "1079342389440-42k6mgpccsqo2qjtqgg2t2reg9p7oet4.apps.googleusercontent.com",
-              "client_type": 2,
-              "ios_info": {
-                "bundle_id": "com.check.flavour1-qa"
-              }
-            }
-          ]
+          "other_platform_oauth_client": []
         }
       }
     }

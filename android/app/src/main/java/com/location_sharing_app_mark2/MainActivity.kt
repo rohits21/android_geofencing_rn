@@ -1,4 +1,4 @@
-package com.awesomeproject
+package com.location_sharing_app_mark2
 
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate
