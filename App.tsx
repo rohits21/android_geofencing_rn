@@ -5,8 +5,8 @@
  * @format
  */
 
-import React from 'react';
-import type {PropsWithChildren} from 'react';
+import React, { useEffect } from 'react';
+import type { PropsWithChildren } from 'react';
 import {
   SafeAreaView,
   ScrollView,
@@ -15,6 +15,7 @@ import {
   Text,
   useColorScheme,
   View,
+  Button
 } from 'react-native';
 
 import {
@@ -25,11 +26,16 @@ import {
   ReloadInstructions,
 } from 'react-native/Libraries/NewAppScreen';
 
+import './src/firebase/config';
+
+// Import Firestore
+import firestore from '@react-native-firebase/firestore';
+
 type SectionProps = PropsWithChildren<{
   title: string;
 }>;
 
-function Section({children, title}: SectionProps): React.JSX.Element {
+function Section({ children, title }: SectionProps): React.JSX.Element {
   const isDarkMode = useColorScheme() === 'dark';
   return (
     <View style={styles.sectionContainer}>
@@ -62,6 +68,44 @@ function App(): React.JSX.Element {
     backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
   };
 
+
+  useEffect(() => {
+    // Initialize Firestore
+    const initializeFirestore = async () => {
+      try {
+        // Creating a reference to the 'Users' collection
+        const usersCollectionRef = firestore().collection('Users');
+
+        // Adding a new document to the 'Users' collection
+        await usersCollectionRef.add({
+          name: 'John Doe',
+          age: 30,
+          email: 'john.doe@example.com',
+        });
+
+        console.log('User added!');
+      } catch (error) {
+        console.error('Error adding user: ', error);
+      }
+    };
+
+    initializeFirestore();
+  }, []);
+
+  // Function to add another user to the 'Users' collection
+  const addNewUser = async () => {
+    try {
+      await firestore().collection('Users').add({
+        name: 'Jane Doe',
+        age: 25,
+        email: 'jane.doe@example.com',
+      });
+      console.log('Another user added!');
+    } catch (error) {
+      console.error('Error adding another user: ', error);
+    }
+  };
+
   return (
     <SafeAreaView style={backgroundStyle}>
       <StatusBar
@@ -72,6 +116,8 @@ function App(): React.JSX.Element {
         contentInsetAdjustmentBehavior="automatic"
         style={backgroundStyle}>
         <Header />
+        <Text>Firestore Data Initialization Example</Text>
+        <Button title="Add Another User" onPress={() => addNewUser()} />
         <View
           style={{
             backgroundColor: isDarkMode ? Colors.black : Colors.white,
