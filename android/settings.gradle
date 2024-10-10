@@ -4,3 +4,10 @@ extensions.configure(com.facebook.react.ReactSettingsExtension){ ex -> ex.autoli
 rootProject.name = 'AwesomeProject'
 include ':app'
 includeBuild('../node_modules/@react-native/gradle-plugin')
+
+include ':react-native-boundary'
+project(':react-native-boundary').projectDir = new File(rootProject.projectDir, '../node_modules/react-native-boundary/android')
+
+//   include ':react-native-simple-native-geofencing'
+//   project(':react-native-simple-native-geofencing').projectDir = new File(rootProject.projectDir,'../node_modules/@shehang/react-native-simple-native-geofencing/android')
+

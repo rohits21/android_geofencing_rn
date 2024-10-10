@@ -1,12 +1,5 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- */
-
 import React, { useEffect } from 'react';
-import type { PropsWithChildren } from 'react';
+
 import {
   SafeAreaView,
   ScrollView,
@@ -18,21 +11,23 @@ import {
   Button
 } from 'react-native';
 
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
-
 import './src/firebase/config';
 
 // Import Firestore
 import firestore from '@react-native-firebase/firestore';
+import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import GuardianActivity from './src/screens/GuardianActivity';
+import LoginActivity from './src/screens/LoginActivity';
+import RegistrationActivity from './src/screens/RegistrationActivity';
+import HomeActivity from './src/screens/HomeActivity';
+import GeofenceActivity from './src/screens/GeofenceActivity';
+import LiveLocationActivity from './src/screens/LiveLocationActivity';
+import GeofenceActivity_2 from './src/screens/GeofenceActivity_2';
+import GeofenceActivity_3 from './src/screens/GeofenceActivity_3';
 
 
-
+const Stack = createNativeStackNavigator();
 function App(): React.JSX.Element {
 
 
@@ -56,7 +51,7 @@ function App(): React.JSX.Element {
       }
     };
 
-    initializeFirestore();
+   // initializeFirestore();
   }, []);
 
   // Function to add another user to the 'Users' collection
@@ -73,19 +68,27 @@ function App(): React.JSX.Element {
     }
   };
 
+
   return (
-    <SafeAreaView>
-      <StatusBar
-        barStyle={'light-content'}
-      />
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic">
-        <Text>Firestore Data Initialization Example</Text>
-        <Button title="Add Another User" onPress={() => addNewUser()} />
-      </ScrollView>
-    </SafeAreaView>
+    <NavigationContainer>
+     
+
+          <Stack.Navigator initialRouteName="GuardianActivity">
+            <Stack.Screen name='GuardianActivity' options={{ headerShown: false }} component={GuardianActivity}/>
+            <Stack.Screen name='LoginActivity' options={{ headerShown: false }} component={LoginActivity}/>
+            <Stack.Screen name='RegistrationActivity' options={{ headerShown: false }} component={RegistrationActivity}/>
+            <Stack.Screen name='HomeActivity' options={{ headerShown: false }} component={HomeActivity}/>
+            <Stack.Screen name='GeofenceActivity' options={{headerShown:false}} component={GeofenceActivity_3} />
+            <Stack.Screen name='LiveLocationActivity' options={{headerShown:false}} component={LiveLocationActivity} />
+          </Stack.Navigator>
+     
+
+    </NavigationContainer>
+
   );
 }
+
+
 
 const styles = StyleSheet.create({
   sectionContainer: {
