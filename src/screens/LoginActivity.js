@@ -16,12 +16,18 @@ const LoginActivity = ({navigation}) => {
 
   const handleLogin = async () => {
     try {
+
+      console.log("Login Activity :: Handle Login :: Entered data :: ", email, password);
+      
       // Query Firestore to find the user with the given email
       const usersCollection = firestore().collection('users');
       const querySnapshot = await usersCollection
         .where('email', '==', email)
         .where('password', '==', password) // Check for matching password
         .get();
+
+        console.log("Login Activity :: Handle Login :: query snapshot :: ", querySnapshot);
+        
 
       if (!querySnapshot.empty) {
         // User exists, extract user data

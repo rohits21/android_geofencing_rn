@@ -6,7 +6,8 @@ import firestore from '@react-native-firebase/firestore';
 import Geolocation from '@react-native-community/geolocation';
 import Geofencing, {Events} from '@rn-bridge/react-native-geofencing';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { addGeofenceToFirestore, fetchAllGeofences } from '../utility/firebaseHelper';
+import { addGeofenceEventsToFirestore, addGeofenceToFirestore, fetchAllGeofences, removeAllGeofencesFromFirestoreByUserId } from '../utility/firebaseHelper';
+import { getUserData } from '../utility/utilityFunctions';
 
 const initialRegion = {
     latitude: 28.4916,
@@ -26,8 +27,24 @@ const removeGeofences = async (setGeofences)=>{
     console.log("Removing geofence of id:", geofence.id, "response is:", response);
   }
 
+  
+
   await AsyncStorage.removeItem('geofences');
-  setGeofences([]);
+  //setGeofences([]);
+
+  let res = await AsyncStorage.getItem('user')
+  res = await JSON.parse(res);
+
+  await removeAllGeofencesFromFirestoreByUserId(res.email)
+
+  const firestoreGeofences = await fetchAllGeofences(res.email);
+
+  console.log("Fetched Geofences ", firestoreGeofences);
+  setGeofences(firestoreGeofences);
+
+
+
+
 
 
 
@@ -37,8 +54,8 @@ const removeGeofences = async (setGeofences)=>{
   //   console.log("Removing geofence of id : ", geofence , "respones is : ", response);  
   // })
 }
-  
 
+let userData;
 const GeofenceActivity_3 = () => {
 
     
@@ -50,18 +67,107 @@ const GeofenceActivity_3 = () => {
   const mapRef = useRef(null);
 
 
+  const getCurrentDateTimeId = () => {
+    const now = new Date();
+    return now.toISOString(); // Generates an ISO string as unique ID
+  };
+
+
+  const addGeofenceEvents = async (eventType, ids)=>{
+
+    console.log("Adding geofence event :: Event type is :: ", eventType);
+    
+
+    let res = await AsyncStorage.getItem('user')
+    res = await JSON.parse(res);
+  
+    var currentTime = new Date();
+
+    var currentOffset = currentTime.getTimezoneOffset();
+    
+    var ISTOffset = 330;   // IST offset UTC +5:30 
+    
+    var ISTTime = new Date(currentTime.getTime() + (ISTOffset + currentOffset)*60000);
+
+    
+    
+
+
+    console.log("Geofence Activity 3 :: Add Geofence Event :: time when event occure :: ", ISTTime);
+    
+
+    
+  
+    
+  
+   // userData = await getUserData();
+  
+    Geolocation.getCurrentPosition(
+      async position => {
+         const { latitude, longitude } =  position.coords;
+        // console.log("Geofence Activity :: USer Data when event occur :: ", userData);
+         
+         const geofenceEvent = {
+         id:ISTTime,
+         latitude: latitude,
+         longitude: longitude,
+         geofenceEventType: eventType,
+         geofenceId: ids[0],
+         userId: res.email,
+         happenedAt : ISTTime
+  
+         }
+         console.log("Geofence Activity :: Event object :: ", geofenceEvent);
+         
+         await addGeofenceEventsToFirestore(geofenceEvent)
+       },
+       error => console.log(error),
+       { enableHighAccuracy: true, timeout: 1500, maximumAge: 1000 }
+     );
+  
+  
+  }
+
+
+    
+
+
+
+
   useEffect(() => {
-    // Register event listeners once when the component mounts
+
+
+
     Geofencing.onEnter((ids) => {
       console.log("Enter:", ids);
+
+      ToastAndroid.show("User entered into geofence", ToastAndroid.LONG);
+
+      setTimeout(async () => {
+        await addGeofenceEvents("Enter", ids);
+      }, 0); 
+
+     // await addGeofenceEvents("Enter", ids);
+     
     });
   
     Geofencing.onExit((ids) => {
       console.log("Exit:", ids);
+
+      ToastAndroid.show("User exited from geofence", ToastAndroid.LONG);
+
+      setTimeout(async () => {
+        await addGeofenceEvents("Exit", ids);
+      }, 0); 
+
+     // await addGeofenceEvents("Exit", ids);
     });
-  
-    // Clean up event listeners when the component unmounts
+    //userData = getUserData();
+    addPreviousGeofences(setGeofences)
+
+    
    
+    
   }, []); // Empty dependency array to run only once
   
   
@@ -69,12 +175,9 @@ const GeofenceActivity_3 = () => {
   useEffect(()=>{
 
     //removeGeofences();
-    getGeofences(setGeofences)
+   
     console.log("Previous Geofences", geofences[0]);
     
-
-
-
     Geolocation.getCurrentPosition(
         position => {
           const { latitude, longitude } = position.coords;
@@ -91,7 +194,7 @@ const GeofenceActivity_3 = () => {
          // checkGeofence(latitude, longitude);
         },
         error => console.log(error),
-        { enableHighAccuracy: true, distanceFilter: 10 }
+        { enableHighAccuracy: true, distanceFilter: 5 }
       );
 
       return () => Geolocation.clearWatch(watchId);
@@ -111,7 +214,7 @@ const GeofenceActivity_3 = () => {
     };
 
     //setGeofences([...geofences, newGeofence]);
-    addGeofence(newGeofence, setGeofences, geofenceTime);
+    addGeofence(newGeofence, setGeofences, geofenceTime, addGeofenceEvents);
 
    // addGeofence(markerCoordinate, latitude, longitude, geofenceRadius);
 
@@ -208,13 +311,49 @@ const GeofenceActivity_3 = () => {
 
 export default GeofenceActivity_3
 
-const getCurrentDateTimeId = () => {
-  const now = new Date();
-  return now.toISOString(); // Generates an ISO string as unique ID
+
+
+const addPreviousGeofences = async (setGeofences) => {
+
+
+  const currGeofences = await Geofencing.getRegisteredGeofences()
+
+
+  for (const geofence of currGeofences) {
+    const response = await Geofencing.removeGeofence(geofence);
+    console.log("Removing geofence of id:", geofence.id, "response is:", response);
+  }
+
+  
+
+  await AsyncStorage.removeItem('geofences');
+
+  let res = await AsyncStorage.getItem('user')
+  res = await JSON.parse(res);
+
+
+  const firestoreGeofences = await fetchAllGeofences(res.email);
+
+  console.log("Fetched Geofences ", firestoreGeofences);
+  setGeofences(firestoreGeofences);
+
+  await AsyncStorage.setItem('geofences', JSON.stringify(firestoreGeofences));
+
+  firestoreGeofences.forEach(async (geofence) =>{
+    const response = await Geofencing.addGeofence({
+      id: geofence.id,
+      latitude: geofence.latitude,
+      longitude: geofence.longitude,
+      radius: geofence.radius
+    });
+
+    console.log("Geofence response", response);
+  })
+
 };
 
 
-const addGeofence = async (geofence, setGeofences, geofenceTime) => {
+const addGeofence = async (geofence, setGeofences, geofenceTime, addGeofenceEvents) => {
   try {
     const response = await Geofencing.addGeofence({
       id: geofence.id,
@@ -224,18 +363,29 @@ const addGeofence = async (geofence, setGeofences, geofenceTime) => {
     });
 
     
-    console.log("Geofence response", response);
+    console.log("Goefence Activity :: Add Geofence :: Response :: ", response);
 
     if(response){
       const timerDuration = geofenceTime * 60 * 1000;
 
-      const timerId = setTimeout(() => {
+      const timerId = setTimeout(async () => {
         console.log('Alert: No one has entered the geofence within the given time frame!');
+        await addGeofenceEvents("No Event Happened", response.id);
       }, timerDuration);
 
-      await addGeofenceToFirestore(geofence);
+      let res = await AsyncStorage.getItem('user')
+      res = await JSON.parse(res);
 
-      const firestoreGeofences = await fetchAllGeofences();
+      await addGeofenceToFirestore(geofence, res.email);
+
+      
+      console.log("Geofence adding", res);
+      
+      //console.log("Action bar", res);
+
+      console.log("Geofence Activity :: User Data :: ",userData);
+      
+      const firestoreGeofences = await fetchAllGeofences(res.email);
 
       console.log("Fetched Geofences ", firestoreGeofences);
       setGeofences(firestoreGeofences);
@@ -243,6 +393,51 @@ const addGeofence = async (geofence, setGeofences, geofenceTime) => {
       await AsyncStorage.setItem('geofences', JSON.stringify(firestoreGeofences));
 
       console.log('Geofence added successfully, timer started.');
+
+      Geofencing.onEnter(async (ids) => {
+        console.log("Geofence Enter Event with geofence id :", ids);
+
+        ToastAndroid.show("User entered into geofence", ToastAndroid.LONG);
+
+        // setTimeout(async () => {
+        //   await addGeofenceEvents("Enter", ids);
+        // }, 0); 
+
+
+      //  await addGeofenceEvents("Enter", ids);
+
+        // Geolocation.getCurrentPosition(
+        //  async position => {
+        //     const { latitude, longitude } = position.coords;
+        //     const geofenceEvent = {
+        //       id:getCurrentDateTimeId(), // Unique ID for the geofence (you can use timestamp or other identifier)
+        //     latitude: latitude,
+        //     longitude: longitude,
+        //     geofenceEventType: "Enter",
+        //     geofenceId: ids[0],
+        //     userId: "rohit@gmail.com",
+    
+        //     }
+        //     await addGeofenceEventsToFirestore(geofenceEvent)
+        //   },
+        //   error => console.log(error),
+        //   { enableHighAccuracy: true, timeout: 1500, maximumAge: 1000 }
+        // );
+
+       
+        clearTimeout(timerId)
+      });
+    
+      Geofencing.onExit(async (ids) => {
+        console.log("Exit:", ids);
+
+        ToastAndroid.show("User exited from geofence", ToastAndroid.LONG);
+
+        // setTimeout(async () => {
+        //   await addGeofenceEvents("Exit", ids);
+        // }, 0); 
+       // await addGeofenceEvents("Exit", ids);
+      });
       
 
     }
@@ -259,21 +454,15 @@ const addGeofence = async (geofence, setGeofences, geofenceTime) => {
   }
 };
 
-const getGeofences = async (setGeofences) => {
+
+
 
   
-  let geofences = await AsyncStorage.getItem('geofences');
-  if(geofences){
-    geofences = JSON.parse(geofences); 
-    setGeofences(geofences);   
-    return geofences;
-  }else{
-    return null;
-  }
 
-  
- 
-};
+
+
+
+
 
 
 

@@ -1,7 +1,27 @@
 import firestore from '@react-native-firebase/firestore';
 
 // Method to add geofence to Firestore
-const addGeofenceToFirestore = async (geofence) => {
+
+
+const getCurrentDateTimeId = () => {
+  const now = new Date();
+  return now.toISOString(); // Generates an ISO string as unique ID
+};
+
+const addSOSToFirestore = async (sosDoc) => {
+  try {
+    // Add a new geofence document with auto-generated ID
+    const geofenceRef = await firestore()
+      .collection('sos')
+      .add(sosDoc);
+
+    console.log('SOS created with id : ', geofenceRef.id);
+  } catch (error) {
+    console.error('Error creating sos : ', error);
+  }
+}
+
+const addGeofenceToFirestore = async (geofence, userEmail) => {
   try {
     // Add a new geofence document with auto-generated ID
     const geofenceRef = await firestore()
@@ -11,13 +31,36 @@ const addGeofenceToFirestore = async (geofence) => {
         latitude: geofence.latitude,
         longitude: geofence.longitude,
         radius: geofence.radius,
-        userId: "rohit@gmail.com"
+        userId: userEmail
        // createdAt: firestore.FieldValue.serverTimestamp(), // Store server timestamp
       });
 
     console.log('Geofence added with ID: ', geofenceRef.id);
   } catch (error) {
     console.error('Error adding geofence: ', error);
+  }
+};
+
+
+const addGeofenceEventsToFirestore = async (geofenceEvent) => {
+  try {
+    // Add a new geofence document with auto-generated ID
+    const geofenceEventRef = await firestore()
+      .collection('geofenceEvent')
+      .add({
+        id: geofenceEvent.id, // Unique ID for the geofence (you can use timestamp or other identifier)
+        latitude: geofenceEvent.latitude,
+        longitude: geofenceEvent.longitude,
+        geofenceEventType: geofenceEvent.geofenceEventType,
+        geofenceId: geofenceEvent.geofenceId,
+        userId: geofenceEvent.userId,
+        happenedAt: geofenceEvent.happenedAt
+        
+      });
+
+    console.log('Geofence Event added with ID: ', geofenceEventRef.id);
+  } catch (error) {
+    console.error('Error adding geofence Event: ', error);
   }
 };
 
@@ -115,4 +158,4 @@ const removeAllGeofencesFromFirestore = async () => {
   };
 
 
-export {addGeofenceToFirestore, fetchAllGeofences, removeAllGeofencesFromFirestore, removeAllGeofencesFromFirestoreByUserId}
+export {addGeofenceToFirestore, fetchAllGeofences, removeAllGeofencesFromFirestore, removeAllGeofencesFromFirestoreByUserId, addGeofenceEventsToFirestore, addSOSToFirestore}

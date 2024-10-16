@@ -15,6 +15,7 @@ import './src/firebase/config';
 
 // Import Firestore
 import firestore from '@react-native-firebase/firestore';
+
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import GuardianActivity from './src/screens/GuardianActivity';
@@ -27,11 +28,35 @@ import GeofenceActivity_2 from './src/screens/GeofenceActivity_2';
 import GeofenceActivity_3 from './src/screens/GeofenceActivity_3';
 
 
+
+import PushNotification from 'react-native-push-notification'
+
+
+
 const Stack = createNativeStackNavigator();
-function App(): React.JSX.Element {
+function App() {
 
 
   useEffect(() => {
+
+    PushNotification.createChannel(
+      {
+        channelId: "channel-id-1", // (required)
+        channelName: "My channel", // (required)
+        channelDescription: "A channel to categorise your notifications", // (optional) default: undefined.
+        playSound: false, // (optional) default: true
+        soundName: "default", // (optional) See `soundName` parameter of `localNotification` function
+        // (optional) default: Importance.HIGH. Int value of the Android notification importance
+        vibrate: true, // (optional) default: true. Creates the default vibration pattern if true.
+      },
+      (created) => console.log(`createChannel returned '${created}'`) // (optional) callback returns whether the channel was created, false means it already existed.
+    );
+
+    // PushNotification.configure({
+    //   onNotification: function(notification) {
+    //     console.log('LOCAL NOTIFICATION ==>', notification);
+    //   },
+    // });
     // Initialize Firestore
     const initializeFirestore = async () => {
       try {
@@ -108,5 +133,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
 });
+
+
 
 export default App;

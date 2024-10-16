@@ -11,6 +11,8 @@ import com.facebook.react.defaults.DefaultReactHost.getDefaultReactHost
 import com.facebook.react.defaults.DefaultReactNativeHost
 import com.facebook.soloader.SoLoader
 import com.eddieowens.RNBoundaryPackage;
+import com.dieam.reactnativepushnotification.ReactNativePushNotificationPackage;  // <--- Import Package
+
 
 class MainApplication : Application(), ReactApplication {
 
@@ -19,6 +21,7 @@ class MainApplication : Application(), ReactApplication {
             override fun getPackages(): List<ReactPackage> {
                 val packages = PackageList(this).packages.toMutableList()
                 packages.add(GeofencePackage()) // Add your custom package here
+               // packages.add(ReactNativePushNotificationPackage())
                 //packages.add(RNBoundaryPackage())
                 return packages
             }

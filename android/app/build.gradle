@@ -117,6 +117,7 @@ dependencies {
     implementation("com.google.android.gms:play-services-location:21.0.1")
    
     implementation project(':react-native-boundary')
+    implementation project(':react-native-push-notification')
     //implementation project(':react-native-simple-native-geofencing')
 
      // implementation project(':react-native-background-geolocation')

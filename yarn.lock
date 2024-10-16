@@ -3725,6 +3725,7 @@ __metadata:
     react-native-boundary: ^1.1.1
     react-native-linear-gradient: ^2.8.3
     react-native-maps: ^1.18.0
+    react-native-push-notification: ^8.1.1
     react-native-safe-area-context: ^4.11.0
     react-native-screens: ^3.34.0
     react-native-share: ^11.0.3
@@ -8932,6 +8933,16 @@ __metadata:
     react-native-web:
       optional: true
   checksum: f2be313b652a9cc1cdcf3eaa3bf8d33ca0ce564d4519371acbbbccf977342ffbd7f8ce36c851ccf7afe31c02a558d06bfd149d14ba9cc0916732a3a589f93b6d
+  languageName: node
+  linkType: hard
+
+"react-native-push-notification@npm:^8.1.1":
+  version: 8.1.1
+  resolution: "react-native-push-notification@npm:8.1.1"
+  peerDependencies:
+    "@react-native-community/push-notification-ios": ^1.10.1
+    react-native: ">=0.33"
+  checksum: 64d500c1163eaa4eee549e6e2f8204cac643f91ae918a227e9d93f8261afdebbdaa7ba5d12da0039155cbf6a599032dd15be4ebe53737cbeeadec4469893f00d
   languageName: node
   linkType: hard
 

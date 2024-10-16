@@ -6,7 +6,7 @@ const getGeofenceAlerts = () => {
 
   useEffect(() => {
     const subscriber = firestore()
-      .collection('geofenceTransitionEvents')
+      .collection('geofenceEvent')
       .onSnapshot(querySnapshot => {
         const activities = [];
         querySnapshot.forEach(documentSnapshot => {
@@ -15,12 +15,20 @@ const getGeofenceAlerts = () => {
             id: documentSnapshot.id,
           });
         });
+        console.log("GET GEOFENCE ALERTS :: ", activities);
+        
         setGeofenceActivities(activities);
       });
 
     // Unsubscribe from events when no longer in use
+
+    
+    
     return () => subscriber();
   }, []);
+
+
+  
 
   return geofenceActivities;
 };

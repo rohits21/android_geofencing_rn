@@ -4,6 +4,7 @@ import MainBackground from '../background/MainBackground'
 import ActionBar from '../components/ActionBar'
 import HomeActionButtons from '../components/HomeActionButtons'
 import HomeScreenAlertsRV from '../components/HomeScreenAlertsRV'
+import MyGroups from '../components/MyGroups'
 
 const Home = ({navigation}) => {
 
@@ -16,6 +17,10 @@ const Home = ({navigation}) => {
           <ActionBar navigation={navigation}/>
           <HomeActionButtons navigation={navigation} />
           <HomeScreenAlertsRV/>
+          <Text style={styles.titleText}>My Groups</Text>
+
+          <MyGroups/>
+
 
     </View>
 
@@ -38,4 +43,13 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 24,
   },
+  titleText : {
+    color:"#fff",
+    padding:20,
+    fontSize:20,
+    fontWeight:'bold',
+    marginTop: 60
+},
 });
+
+

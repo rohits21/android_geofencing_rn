@@ -2,12 +2,20 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import { triggerLocalNotification } from '../..';
+
+
+
+const sendNotification = ()=>{
+  triggerLocalNotification("aa", "aa")
+}
 
 const ActionBar = ({navigation}) => {
 
  
   const [userData, setUserData] = useState({})
-  const [imagePath, setImagePath] = useState(null)
+  const defaultImg = require('../assets/Images/media_prashant.jpg')
+  const [imagePath, setImagePath] = useState(defaultImg)
 
   const setImage = () =>{
     let imageUri;
@@ -80,7 +88,7 @@ const ActionBar = ({navigation}) => {
         <Icon style={styles.iconButton} name="calendar-today" size={30} color="#fff" />
         </TouchableOpacity>
 
-        <TouchableOpacity onPress={() => console.log('Notification Pressed')}>
+        <TouchableOpacity onPress={sendNotification}>
         <Icon style={styles.iconButton} name="notifications" size={30} color="#fff" />
         </TouchableOpacity>
 

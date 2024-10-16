@@ -1,258 +1,396 @@
+
 import React, {useRef, useState, useEffect} from 'react';
 import { View, Text, Button, StyleSheet, TouchableOpacity, ToastAndroid } from 'react-native';
 import MapView, { PROVIDER_GOOGLE,Marker, Polygon,Circle } from 'react-native-maps';
 import firestore from '@react-native-firebase/firestore';
 import Geolocation from '@react-native-community/geolocation';
-import { NativeModules } from 'react-native';
-
-console.log("Native module", NativeModules);
-const { GeofenceModule } = NativeModules;
-
-console.log('GeofenceModule:', GeofenceModule);
-//import BackgroundGeolocation from "react-native-background-geolocation";
-
-const createGeofence = (id, latitude, longitude, radius) => {
-
-
-  if (GeofenceModule) {
-    console.log('GeofenceModule initiated');
-    GeofenceModule.createGeofence(id, latitude, longitude, radius, 24 * 60 * 60 * 1000); // Duration in milliseconds
-  } else {
-    console.error('GeofenceModule is not available');
-  }
-};
+import Geofencing, {Events} from '@rn-bridge/react-native-geofencing';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { addGeofenceToFirestore, fetchAllGeofences } from '../utility/firebaseHelper';
 
 const initialRegion = {
-  latitude: 28.4916,
-  longitude: 77.0745,
-  latitudeDelta: 0.015,
-  longitudeDelta: 0.0121,
-};
+    latitude: 28.4916,
+    longitude: 77.0745,
+    latitudeDelta: 0.015,
+    longitudeDelta: 0.0121,
+  };
 
+
+
+const removeGeofences = async (setGeofences)=>{
+  const currGeofences = await Geofencing.getRegisteredGeofences()
+
+
+  for (const geofence of currGeofences) {
+    const response = await Geofencing.removeGeofence(geofence);
+    console.log("Removing geofence of id:", geofence.id, "response is:", response);
+  }
+
+  await AsyncStorage.removeItem('geofences');
+  setGeofences([]);
+
+
+
+  // currGeofences.forEach(async (geofence)=>{
+  //   const response = await Geofencing.removeGeofence(id)
+  
+  //   console.log("Removing geofence of id : ", geofence , "respones is : ", response);  
+  // })
+}
+  
 
 const GeofenceActivity = () => {
 
+    
+  const [geofences, setGeofences] = useState([]);
   const [markerCoordinate, setMarkerCoordinate] = useState(null);
   const [currentLocation, setCurrentLocation] = useState(null);
   const [geofenceRadius, setGeofenceRadius] = useState(500);
+  const [geofenceTime, setGeofenceTime] = useState(2);
   const mapRef = useRef(null);
 
+
   useEffect(() => {
-    // Request current location on component mount
+    // Register event listeners once when the component mounts
+    Geofencing.onEnter((ids) => {
+      console.log("Enter:", ids);
+    });
+  
+    Geofencing.onExit((ids) => {
+      console.log("Exit:", ids);
+    });
+  
+    // Clean up event listeners when the component unmounts
+   
+  }, []); // Empty dependency array to run only once
+  
+  
+
+  useEffect(()=>{
+
+    //removeGeofences();
+    getGeofences(setGeofences)
+    console.log("Previous Geofences", geofences[0]);
+    
 
 
 
-    if (GeofenceModule) {
-        console.log("GeofenceModule is properly linked");
-    } else {
-        console.error("GeofenceModule is not linked");
-    }
     Geolocation.getCurrentPosition(
-      position => {
-        const { latitude, longitude } = position.coords;
-        setCurrentLocation({ latitude, longitude });
-      },
-      error => console.log(error),
-      { enableHighAccuracy: true, timeout: 1500, maximumAge: 1000 }
-    );
-
-    const watchId = Geolocation.watchPosition(
-      position => {
-        const { latitude, longitude } = position.coords;
-        setCurrentLocation({ latitude, longitude });
-        checkGeofence(latitude, longitude);
-      },
-      error => console.log(error),
-      { enableHighAccuracy: true, distanceFilter: 10 }
-    );
-
-    return () => Geolocation.clearWatch(watchId);
-  }, []);
-
-
-
-   const handleLongPress = async  e => {
-    const { latitude, longitude } = e.nativeEvent.coordinate;
-    setMarkerCoordinate({ latitude, longitude });
-    createGeofence("1", latitude, longitude, geofenceRadius);
-  };
-
-  const checkGeofence = (latitude, longitude) => {
-    if (markerCoordinate) {
-      const distance = getDistanceFromLatLonInMeters(
-        latitude,
-        longitude,
-        markerCoordinate.latitude,
-        markerCoordinate.longitude
+        position => {
+          const { latitude, longitude } = position.coords;
+          setCurrentLocation({ latitude, longitude });
+        },
+        error => console.log(error),
+        { enableHighAccuracy: true, timeout: 1500, maximumAge: 1000 }
       );
 
-      if (distance <= geofenceRadius) {
-        console.log("ntered geofence")
-        ToastAndroid.show('Entered geofence', ToastAndroid.SHORT);
-      } else {
-        console.log("Exited geofence")
-        ToastAndroid.show('Exited geofence', ToastAndroid.SHORT);
-      }
-    }
-  };
+      const watchId = Geolocation.watchPosition(
+        position => {
+          const { latitude, longitude } = position.coords;
+          setCurrentLocation({ latitude, longitude });
+         // checkGeofence(latitude, longitude);
+        },
+        error => console.log(error),
+        { enableHighAccuracy: true, distanceFilter: 10 }
+      );
 
-  const getDistanceFromLatLonInMeters = (lat1, lon1, lat2, lon2) => {
-    const R = 6371e3; // Earth radius in meters
-    const φ1 = (lat1 * Math.PI) / 180;
-    const φ2 = (lat2 * Math.PI) / 180;
-    const Δφ = ((lat2 - lat1) * Math.PI) / 180;
-    const Δλ = ((lon2 - lon1) * Math.PI) / 180;
+      return () => Geolocation.clearWatch(watchId);
 
-    const a =
-      Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
-      Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  }, [markerCoordinate]);
 
-    const distance = R * c; // Distance in meters
-    return distance;
-  };
+  const handleLongPress = async (e) =>{
+    const currentDate = new Date().toDateString();
+    const { latitude, longitude } = e.nativeEvent.coordinate;
+     setMarkerCoordinate({ latitude, longitude });
 
+     const newGeofence = {
+      id: getCurrentDateTimeId(),
+      latitude,
+      longitude,
+      radius: geofenceRadius,
+    };
 
+    //setGeofences([...geofences, newGeofence]);
+    addGeofence(newGeofence, setGeofences, geofenceTime);
+
+   // addGeofence(markerCoordinate, latitude, longitude, geofenceRadius);
+
+    
+  }
   return (
+    
     <View style={styles.mainContainer}>
-      <View style={styles.controlsContainer}>
-        {/* Geofence Radius Controls */}
-        <View style={styles.controlBox}>
-          <TouchableOpacity style={styles.circularButton}>
-            <Text style={styles.controlButtonText}>-</Text>
-          </TouchableOpacity>
-          <View style={styles.controlTextContainer}>
-            <Text style={styles.controlLabel}>Geofence Radius</Text>
-            <Text style={styles.controlValue}>hhhhhhh</Text>
-          </View>
-          <TouchableOpacity style={styles.circularButton}>
-            <Text style={styles.controlButtonText}>+</Text>
-          </TouchableOpacity>
+    <View style={styles.controlsContainer}>
+      {/* Geofence Radius Controls */}
+      <View style={styles.controlBox}>
+        <TouchableOpacity style={styles.circularButton} onPress={() => setGeofenceRadius((prevRadius) => Math.max(100, prevRadius - 100))} >
+          <Text style={styles.controlButtonText}>-</Text>
+        </TouchableOpacity>
+        <View style={styles.controlTextContainer}>
+          <Text style={styles.controlLabel}>Geofence Radius</Text>
+          <Text style={styles.controlValue}>{geofenceRadius}</Text>
         </View>
-
-        {/* Time Limit Controls */}
-        <View style={styles.controlBox}>
-          <TouchableOpacity style={styles.circularButton}>
-            <Text style={styles.controlButtonText}>-</Text>
-          </TouchableOpacity>
-          <View style={styles.controlTextContainer}>
-            <Text style={styles.controlLabel}>Time Limit</Text>
-            <Text style={styles.controlValue}>2 minutes</Text>
-          </View>
-          <TouchableOpacity style={styles.circularButton}>
-            <Text style={styles.controlButtonText}>+</Text>
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity style={styles.circularButton}  onPress={() => setGeofenceRadius((prevRadius) => prevRadius + 100)}>
+          <Text style={styles.controlButtonText}>+</Text>
+        </TouchableOpacity>
       </View>
 
-      {/* Map View */}
-      <View style={styles.mapContainer}>
-        <MapView
-          provider={PROVIDER_GOOGLE}
-          style={styles.map}
-          region={initialRegion}
-          onLongPress={handleLongPress}  
-          ref={mapRef}
-          showsUserLocation={true}
-          followsUserLocation={true}
-        >
-
-{markerCoordinate && (
-            <>
-              <Marker coordinate={markerCoordinate} />
-              <Circle
-                center={markerCoordinate}
-                radius={geofenceRadius}
-                strokeWidth={2}
-                strokeColor="red"
-                fillColor="rgba(255,0,0,0.3)"
-              />
-            </>
-          )}
-
-        </MapView>
+      {/* Time Limit Controls */}
+      <View style={styles.controlBox}>
+        <TouchableOpacity style={styles.circularButton} onPress={() => setGeofenceTime((prevTime) => Math.max(1, prevTime - 1))}>
+          <Text style={styles.controlButtonText}>-</Text>
+        </TouchableOpacity>
+        <View style={styles.controlTextContainer}>
+          <Text style={styles.controlLabel}>Time Limit</Text>
+          <Text style={styles.controlValue}>{geofenceTime} minutes</Text>
+        </View>
+        <TouchableOpacity style={styles.circularButton}  onPress={() => setGeofenceTime((prevRadius) => prevRadius + 1)}>
+          <Text style={styles.controlButtonText}>+</Text>
+        </TouchableOpacity>
       </View>
+
+     
     </View>
-  );
+
+    <View  style={styles.removeGeofenceContainer} >
+    <TouchableOpacity style={styles.removeButton} onPress={()=>removeGeofences(setGeofences)}>
+          <Text style={styles.removeButtonText}>Remove All Geofences</Text>
+    </TouchableOpacity>
+
+    </View>
+
+   
+    {/* Map View */}
+    <View style={styles.mapContainer}>
+      <MapView
+        provider={PROVIDER_GOOGLE}
+        style={styles.map}
+        region={initialRegion}
+        onLongPress={handleLongPress}  
+        ref={mapRef}
+        showsUserLocation={true}
+        followsUserLocation={true}
+      >
+
+
+{geofences && geofences.map((geofence, index) => (
+    <React.Fragment key={index}>
+      <Marker coordinate={{ latitude: geofence.latitude, longitude: geofence.longitude }} />
+      <Circle
+        center={{ latitude: geofence.latitude, longitude: geofence.longitude }}
+        radius={geofence.radius}
+        strokeWidth={2}
+        strokeColor="red"
+        fillColor="rgba(255,0,0,0.3)"
+      />
+    </React.Fragment>
+  ))}
+
+    {/* {markerCoordinate && (
+          <>
+            <Marker coordinate={markerCoordinate} />
+            <Circle
+              center={markerCoordinate}
+              radius={geofenceRadius}
+              strokeWidth={2}
+              strokeColor="red"
+              fillColor="rgba(255,0,0,0.3)"
+            />
+          </>
+        )} */}
+
+      </MapView>
+    </View>
+  </View>
+
+  )
+}
+
+export default GeofenceActivity
+
+const getCurrentDateTimeId = () => {
+  const now = new Date();
+  return now.toISOString(); // Generates an ISO string as unique ID
 };
 
 
-// const createGeofence = (polygonCoordinates) => {
-//   // Convert polygon into geofence bounds
-//   BackgroundGeolocation.addGeofence({
-//     identifier: "polygon-geofence",
-//     radius: 200, // radius in meters
-//     latitude: polygonCoordinates[0].latitude, // centroid of the polygon
-//     longitude: polygonCoordinates[0].longitude,
-//     notifyOnEntry: true,
-//     notifyOnExit: true
-//   }).then(() => {
-//     console.log('[Geofence] Geofence added');
-//   }).catch((error) => {
-//     console.log('[Geofence] Failed to add geofence', error);
-//   });
-// };
+const addGeofence = async (geofence, setGeofences, geofenceTime) => {
+  try {
+    const response = await Geofencing.addGeofence({
+      id: geofence.id,
+      latitude: geofence.latitude,
+      longitude: geofence.longitude,
+      radius: geofence.radius,
+    });
 
-// // Listen for geofence events
-// BackgroundGeolocation.onGeofence((event) => {
-//   if (event.action === 'ENTER') {
-//     console.log('[Geofence] Entered geofence: ', event.identifier);
-//   } else if (event.action === 'EXIT') {
-//     console.log('[Geofence] Exited geofence: ', event.identifier);
-//   }
-// });
+    
+    console.log("Geofence response", response);
+
+    if(response){
+      const timerDuration = geofenceTime * 60 * 1000;
+
+      const timerId = setTimeout(() => {
+        console.log('Alert: No one has entered the geofence within the given time frame!');
+      }, timerDuration);
+
+      await addGeofenceToFirestore(geofence);
+
+      const firestoreGeofences = await fetchAllGeofences();
+
+      console.log("Fetched Geofences ", firestoreGeofences);
+      setGeofences(firestoreGeofences);
+
+      await AsyncStorage.setItem('geofences', JSON.stringify(firestoreGeofences));
+
+      console.log('Geofence added successfully, timer started.');
+
+      Geofencing.onEnter(async (ids) => {
+        console.log("Geofence Enter Event with geofence id :", ids);
+
+
+        await addGeofenceEvents("Enter", ids);
+        clearTimeout(timerId)
+      });
+    
+      Geofencing.onExit(async (ids) => {
+        console.log("Exit:", ids);
+        await addGeofenceEvents("Exit", ids);
+      });
+      
+      
+
+    }
+
+
+
+    // let geofences = await AsyncStorage.getItem('geofences');
+    // geofences = geofences ? JSON.parse(geofences) : [];
+    // geofences.push(geofence);
+    // setGeofences(geofences)
+    // await AsyncStorage.setItem('geofences', JSON.stringify(geofences));
+
+
+  } catch (error) {
+    console.error("Error adding geofence", error);
+  }
+};
+
+const getGeofences = async (setGeofences) => {
+
+  
+  let geofences = await AsyncStorage.getItem('geofences');
+  if(geofences){
+    geofences = JSON.parse(geofences); 
+    setGeofences(geofences);   
+    return geofences;
+  }else{
+    return null;
+  }
+
+  
+ 
+};
+
+
+
+// const addGeofence =async (markerCoordinate, latitude, longitude, geofenceRadius)=>{
+   
+          
+//           const response = await Geofencing.addGeofence({
+//             id: "1",
+//             latitude,
+//             longitude,
+//             radius: geofenceRadius
+//           });
+
+//           console.log("Geofence response", response);
+          
+        
+// }
+
+
+// const addGeofence = (id, lat, lng, radius) =>{
+
+//     Boundary.add({
+//         lat,
+//         lng,
+//         radius,
+//         id
+
+//     }).then(()=> console.log("success!")).catch((e)=> console.error("error :(", e))
+
+
+// }
 
 const styles = StyleSheet.create({
-  mainContainer: {
-    flex: 1,
-  },
-  controlsContainer: {
-    flexDirection: 'row',
-    padding: 10,
-    justifyContent: 'space-between',
-    backgroundColor: '#f8f8f8', // Optional gradient replacement
-  },
-  controlBox: {
-    flexDirection: 'row',
-    flex: 0.5,
-    justifyContent: 'space-around',
-    alignItems: 'center',
-    backgroundColor: '#e0e0e0', // Optional rectangle background replacement
+    mainContainer: {
+      flex: 1,
+    },
+    removeGeofenceContainer:{
+      
+     
+      
+      backgroundColor: '#f8f8f8',
+    },
+    controlsContainer: {
+      flexDirection: 'row',
+      padding: 10,
+      justifyContent: 'space-between',
+      backgroundColor: '#f8f8f8', // Optional gradient replacement
+    },
+    controlBox: {
+      flexDirection: 'row',
+      flex: 0.5,
+      justifyContent: 'space-around',
+      alignItems: 'center',
+      backgroundColor: '#e0e0e0', // Optional rectangle background replacement
+      padding: 10,
+      borderRadius: 10,
+    },
+    circularButton: {
+      backgroundColor: '#535278', // Button background
+      width: 40,
+      height: 40,
+      justifyContent: 'center',
+      alignItems: 'center',
+      borderRadius: 20,
+    },
+    removeButton: {
+    backgroundColor: '#ff3b3b',
     padding: 10,
     borderRadius: 10,
-  },
-  circularButton: {
-    backgroundColor: '#535278', // Button background
-    width: 40,
-    height: 40,
+    alignItems: 'center',
     justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: 20,
+    marginHorizontal:5
   },
-  controlButtonText: {
+  removeButtonText: {
     color: '#fff',
-    fontSize: 20,
+    fontSize: 16,
     fontWeight: 'bold',
   },
-  controlTextContainer: {
-    alignItems: 'center',
-  },
-  controlLabel: {
-    fontSize: 10,
-    fontWeight: 'bold',
-    color: '#000',
-  },
-  controlValue: {
-    fontSize: 15,
-    fontWeight: 'bold',
-    color: '#000',
-  },
-  mapContainer: {
-    flex: 1,
-  },
-  map: {
-    ...StyleSheet.absoluteFillObject,
-  },
-});
-
-export default GeofenceActivity;
+    controlButtonText: {
+      color: '#fff',
+      fontSize: 20,
+      fontWeight: 'bold',
+    },
+    controlTextContainer: {
+      alignItems: 'center',
+    },
+    controlLabel: {
+      fontSize: 10,
+      fontWeight: 'bold',
+      color: '#000',
+    },
+    controlValue: {
+      fontSize: 15,
+      fontWeight: 'bold',
+      color: '#000',
+    },
+    mapContainer: {
+      flex: 1,
+    },
+    map: {
+      ...StyleSheet.absoluteFillObject,
+    },
+  });
+  
