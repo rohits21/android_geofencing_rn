@@ -28,25 +28,33 @@ const HomeActionButtons = ({navigation}) => {
 
 
   const shareLocation = () => {
-    if (currentLocation) {
-      const latitude = currentLocation.latitude;
-      const longitude = currentLocation.longitude;
-      const url = `https://maps.google.com/?q=${latitude},${longitude}`;
-      const options = {
-        message: `Hey, here is my current location:`,
-        url: url,
-      };
+    try {
 
-      Share.open(options)
-        .then((res) => {
-          console.log('Share success:', res);
-        })
-        .catch((err) => {
-          err && console.error('Error sharing:', err);
-        });
-    } else {
-      console.error('Location not available');
+      if (currentLocation) {
+        const latitude = currentLocation.latitude;
+        const longitude = currentLocation.longitude;
+        const url = `https://maps.google.com/?q=${latitude},${longitude}`;
+        const options = {
+          message: `Hey, here is my current location:`,
+          url: url,
+        };
+  
+        Share.open(options)
+          .then((res) => {
+            console.log('Share success:', res);
+          })
+          .catch((err) => {
+            err && console.error('Error sharing:', err);
+          });
+      } else {
+        console.error('Location not available');
+      }
+      
+    } catch (error) {
+      console.log("Home Action Buttons :: shareLocation :: error :: ",error);
+      
     }
+   
   };
   return (
     <LinearGradient

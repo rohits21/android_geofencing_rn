@@ -30,6 +30,7 @@ import GeofenceActivity_3 from './src/screens/GeofenceActivity_3';
 
 
 import PushNotification from 'react-native-push-notification'
+import GeofenceActivity_4 from './src/screens/GeofenceActivity_4';
 
 
 

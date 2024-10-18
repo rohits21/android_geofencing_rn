@@ -81,19 +81,15 @@ const GeofenceActivity_3 = () => {
     let res = await AsyncStorage.getItem('user')
     res = await JSON.parse(res);
   
-    var currentTime = new Date();
-
-    var currentOffset = currentTime.getTimezoneOffset();
-    
-    var ISTOffset = 330;   // IST offset UTC +5:30 
-    
-    var ISTTime = new Date(currentTime.getTime() + (ISTOffset + currentOffset)*60000);
-
+    const indianTime = new Date().toLocaleString('en-IN', {
+      timeZone: 'Asia/Kolkata',
+      hour12: false
+  });
     
     
 
 
-    console.log("Geofence Activity 3 :: Add Geofence Event :: time when event occure :: ", ISTTime);
+    console.log("Geofence Activity 3 :: Add Geofence Event :: time when event occure :: ", indianTime);
     
 
     
@@ -108,13 +104,13 @@ const GeofenceActivity_3 = () => {
         // console.log("Geofence Activity :: USer Data when event occur :: ", userData);
          
          const geofenceEvent = {
-         id:ISTTime,
+         id:indianTime,
          latitude: latitude,
          longitude: longitude,
          geofenceEventType: eventType,
          geofenceId: ids[0],
          userId: res.email,
-         happenedAt : ISTTime
+         happenedAt : indianTime
   
          }
          console.log("Geofence Activity :: Event object :: ", geofenceEvent);
@@ -136,34 +132,42 @@ const GeofenceActivity_3 = () => {
 
   useEffect(() => {
 
-
-
-    Geofencing.onEnter((ids) => {
-      console.log("Enter:", ids);
-
-      ToastAndroid.show("User entered into geofence", ToastAndroid.LONG);
-
-      setTimeout(async () => {
-        await addGeofenceEvents("Enter", ids);
-      }, 0); 
-
-     // await addGeofenceEvents("Enter", ids);
-     
-    });
-  
-    Geofencing.onExit((ids) => {
-      console.log("Exit:", ids);
-
-      ToastAndroid.show("User exited from geofence", ToastAndroid.LONG);
-
-      setTimeout(async () => {
-        await addGeofenceEvents("Exit", ids);
-      }, 0); 
-
-     // await addGeofenceEvents("Exit", ids);
-    });
-    //userData = getUserData();
     addPreviousGeofences(setGeofences)
+
+    if(!Geofencing.isOnEnterListenerAdded()){
+      Geofencing.onEnter((ids) => {
+        console.log("Enter:", ids);
+  
+        ToastAndroid.show("User entered into geofence", ToastAndroid.LONG);
+  
+        setTimeout(async () => {
+          await addGeofenceEvents("Enter", ids);
+        }, 0); 
+  
+       // await addGeofenceEvents("Enter", ids);
+       
+      });
+    }
+
+    if(!Geofencing.isOnExitListenerAdded()){
+      Geofencing.onExit((ids) => {
+        console.log("Exit:", ids);
+  
+        ToastAndroid.show("User exited from geofence", ToastAndroid.LONG);
+  
+        setTimeout(async () => {
+          await addGeofenceEvents("Exit", ids);
+        }, 0); 
+  
+       // await addGeofenceEvents("Exit", ids);
+      });
+    }
+
+   
+  
+    
+    // //userData = getUserData();
+   
 
     
    
@@ -178,14 +182,14 @@ const GeofenceActivity_3 = () => {
    
     console.log("Previous Geofences", geofences[0]);
     
-    Geolocation.getCurrentPosition(
-        position => {
-          const { latitude, longitude } = position.coords;
-          setCurrentLocation({ latitude, longitude });
-        },
-        error => console.log(error),
-        { enableHighAccuracy: true, timeout: 1500, maximumAge: 1000 }
-      );
+    // Geolocation.getCurrentPosition(
+    //     position => {
+    //       const { latitude, longitude } = position.coords;
+    //       setCurrentLocation({ latitude, longitude });
+    //     },
+    //     error => console.log(error),
+    //     { enableHighAccuracy: true, timeout: 1500, maximumAge: 1000 }
+    //   );
 
       const watchId = Geolocation.watchPosition(
         position => {
@@ -315,6 +319,8 @@ export default GeofenceActivity_3
 
 const addPreviousGeofences = async (setGeofences) => {
 
+ 
+
 
   const currGeofences = await Geofencing.getRegisteredGeofences()
 
@@ -371,6 +377,8 @@ const addGeofence = async (geofence, setGeofences, geofenceTime, addGeofenceEven
       const timerId = setTimeout(async () => {
         console.log('Alert: No one has entered the geofence within the given time frame!');
         await addGeofenceEvents("No Event Happened", response.id);
+
+        clearTimeout(timerId)
       }, timerDuration);
 
       let res = await AsyncStorage.getItem('user')
@@ -394,53 +402,35 @@ const addGeofence = async (geofence, setGeofences, geofenceTime, addGeofenceEven
 
       console.log('Geofence added successfully, timer started.');
 
-      Geofencing.onEnter(async (ids) => {
-        console.log("Geofence Enter Event with geofence id :", ids);
 
-        ToastAndroid.show("User entered into geofence", ToastAndroid.LONG);
+      if(!Geofencing.isOnEnterListenerAdded()){
+        Geofencing.onEnter(async (ids) => {
+          console.log("Geofence Enter Event with geofence id :", ids);
+  
+          ToastAndroid.show("User entered into geofence", ToastAndroid.LONG);
+  
+          setTimeout(async () => {
+            await addGeofenceEvents("Enter", ids);
+          }, 0); 
+        
+          clearTimeout(timerId)
+        });
+      }
 
-        // setTimeout(async () => {
-        //   await addGeofenceEvents("Enter", ids);
-        // }, 0); 
 
-
-      //  await addGeofenceEvents("Enter", ids);
-
-        // Geolocation.getCurrentPosition(
-        //  async position => {
-        //     const { latitude, longitude } = position.coords;
-        //     const geofenceEvent = {
-        //       id:getCurrentDateTimeId(), // Unique ID for the geofence (you can use timestamp or other identifier)
-        //     latitude: latitude,
-        //     longitude: longitude,
-        //     geofenceEventType: "Enter",
-        //     geofenceId: ids[0],
-        //     userId: "rohit@gmail.com",
-    
-        //     }
-        //     await addGeofenceEventsToFirestore(geofenceEvent)
-        //   },
-        //   error => console.log(error),
-        //   { enableHighAccuracy: true, timeout: 1500, maximumAge: 1000 }
-        // );
-
-       
-        clearTimeout(timerId)
-      });
-    
-      Geofencing.onExit(async (ids) => {
-        console.log("Exit:", ids);
-
-        ToastAndroid.show("User exited from geofence", ToastAndroid.LONG);
-
-        // setTimeout(async () => {
-        //   await addGeofenceEvents("Exit", ids);
-        // }, 0); 
-       // await addGeofenceEvents("Exit", ids);
-      });
-      
-
-    }
+      if(!Geofencing.isOnExitListenerAdded()){
+        Geofencing.onExit(async (ids) => {
+          console.log("Exit:", ids);
+  
+          ToastAndroid.show("User exited from geofence", ToastAndroid.LONG);
+  
+          setTimeout(async () => {
+            await addGeofenceEvents("Exit", ids);
+          }, 0); 
+         // await addGeofenceEvents("Exit", ids);
+        });
+      }
+   }
 
     // let geofences = await AsyncStorage.getItem('geofences');
     // geofences = geofences ? JSON.parse(geofences) : [];

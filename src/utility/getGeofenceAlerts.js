@@ -1,7 +1,7 @@
  import firestore from '@react-native-firebase/firestore';
  import { useState, useEffect } from 'react';
 
-const getGeofenceAlerts = () => {
+const getGeofenceAlerts = (setGeofenceAlerts) => {
   const [geofenceActivities, setGeofenceActivities] = useState([]);
 
   useEffect(() => {
@@ -18,6 +18,7 @@ const getGeofenceAlerts = () => {
         console.log("GET GEOFENCE ALERTS :: ", activities);
         
         setGeofenceActivities(activities);
+        setGeofenceAlerts(activities)
       });
 
     // Unsubscribe from events when no longer in use

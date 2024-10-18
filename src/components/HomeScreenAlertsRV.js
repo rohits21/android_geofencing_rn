@@ -7,11 +7,11 @@ import LinearGradient from 'react-native-linear-gradient';
 const HomeScreenAlertsRV = () => {
 
     const [geofenceAlerts, setGeofenceAlerts] = useState(null)
-   const geofenceActivities =  getGeofenceAlerts();
+   const geofenceActivities =  getGeofenceAlerts(setGeofenceAlerts);
 
    useEffect(()=>{
 
-   }, [geofenceActivities])
+   }, [geofenceActivities,getGeofenceAlerts])
    
 
 
@@ -30,7 +30,7 @@ const HomeScreenAlertsRV = () => {
             <View style={{padding:10}}>
 
             <FlatList
-                    data={geofenceActivities}
+                    data={geofenceAlerts}
                     keyExtractor={item => item.id}
                     renderItem={renderItem}
                     style={{ width: "100%", padding:20 }}

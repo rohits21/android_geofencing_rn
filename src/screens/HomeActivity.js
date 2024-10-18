@@ -17,6 +17,46 @@ import firestore from '@react-native-firebase/firestore';
 import { triggerLocalNotification } from '../..'
 import { addGeofenceEventsToFirestore, addSOSToFirestore } from '../utility/firebaseHelper'
 import Geolocation from '@react-native-community/geolocation'
+import Geofencing, {Events} from '@rn-bridge/react-native-geofencing';
+
+
+
+const getTimeDifference = (savedTime) =>{
+  // Fetch saved time from Firestore (example string)
+const fetchedTimeString = savedTime;
+
+// Parse the fetched time string into a Date object (fetched time is in Indian timezone)
+const [datePart, timePart] = fetchedTimeString.split(", ");
+const [day, month, year] = datePart.split("/");
+const [hours, minutes, seconds] = timePart.split(":");
+const fetchedDate = new Date(year, month - 1, day, hours, minutes, seconds);
+
+// Get the current Indian time
+const currentDate = new Date().toLocaleString('en-IN', {
+  timeZone: 'Asia/Kolkata',
+  hour12: false
+});
+
+// Parse the current Indian time into a Date object
+const [currentDatePart, currentTimePart] = currentDate.split(", ");
+const [currDay, currMonth, currYear] = currentDatePart.split("/");
+const [currHours, currMinutes, currSeconds] = currentTimePart.split(":");
+const currentDateTime = new Date(currYear, currMonth - 1, currDay, currHours, currMinutes, currSeconds);
+
+// Calculate the time difference in minutes
+const timeDifference = (currentDateTime - fetchedDate);
+const timeDifferenceInMinutes = timeDifference / (1000 * 60);
+
+// Log and check time difference
+console.log("Time Difference in Minutes:", timeDifferenceInMinutes);
+console.log("Home Activity :: Get Time Difference :: saved Time :: ", fetchedTimeString, " Current Time :: ", currentDate, " time difference is :: ", timeDifferenceInMinutes);
+
+
+return timeDifferenceInMinutes;
+
+}
+
+
 
 
 const getCurrentDateTimeId = () => {
@@ -47,39 +87,50 @@ const HomeActivity = ({navigation}) => {
     // Your SOS logic here
    // alert('SOS initiated!');
 
+  const response = await Geofencing.getCurrentLocation()
+
+  if(response){
+    const indianTime = new Date().toLocaleString('en-IN', {
+      timeZone: 'Asia/Kolkata',
+      hour12: false
+  });
+    
     let res = await AsyncStorage.getItem('user')
     res = await JSON.parse(res);
     console.log(res);
 
     const sosDoc = {
       createdBy : res.email,
-      createdAt : getCurrentDateTimeId(),
-      latitude : currentLocation.latitude || 0.00,
-      longitude : currentLocation.longitude || 0.00
+      createdAt : indianTime,
+      latitude : response.latitude,
+      longitude : response.longitude
     }
 
-    console.log(sosDoc);
+    console.log("Home ACtivity :: Initiate SOS :: sosDoc :: ", sosDoc);
     
 
     await addSOSToFirestore(sosDoc)
+  }
+
+   
   };
 
 
-  Geolocation.watchPosition(
-    async position => {
-       const { latitude, longitude } =  position.coords;
+  // Geolocation.watchPosition(
+  //   async position => {
+  //      const { latitude, longitude } =  position.coords;
 
-       setCurrentLocation({ latitude, longitude });
-      // console.log("Geofence Activity :: USer Data when event occur :: ", userData);
-      userlatitude = this.latitude
-      userlongitude = this.longitude
+  //      setCurrentLocation({ latitude, longitude });
+  //     // console.log("Geofence Activity :: USer Data when event occur :: ", userData);
+  //     userlatitude = this.latitude
+  //     userlongitude = this.longitude
        
-     //r  console.log("Tracking Started :: Coordinates :: ", latitude, longitude);
+  //    //r  console.log("Tracking Started :: Coordinates :: ", latitude, longitude);
        
-     },
-     error => console.log(error),
-     { enableHighAccuracy: true, timeout: 1500, maximumAge: 1000 }
-   );
+  //    },
+  //    error => console.log(error),
+  //    { enableHighAccuracy: true, timeout: 1500, maximumAge: 1000 }
+  //  );
 
 
   useEffect(() => {
@@ -96,12 +147,12 @@ const HomeActivity = ({navigation}) => {
 
             console.log("Home Activity :: New Event :: Data ", newData);
 
-            const givenTime = new Date(newData.geofenceId);
-            const currentTime = new Date();
-            const timeDifference = currentTime - givenTime;
+            const givenTimeString = newData.happenedAt;
 
-            const timeDifferenceInMinutes = timeDifference / (1000 * 60);
 
+
+            const timeDifferenceInMinutes = getTimeDifference(givenTimeString)
+            
             if (timeDifferenceInMinutes < 5) {
               // Invoke the function
               console.log("Less than 5 minutes have passed, invoking function...");
@@ -146,7 +197,9 @@ const HomeActivity = ({navigation}) => {
             const currentTime = new Date();
             const timeDifference = currentTime - givenTime;
 
-            const timeDifferenceInMinutes = timeDifference / (1000 * 60);
+           // const timeDifferenceInMinutes = timeDifference / (1000 * 60);
+
+           timeDifferenceInMinutes = getTimeDifference(newData.createdAt)
 
             if (timeDifferenceInMinutes < 5) {
               // Invoke the function
