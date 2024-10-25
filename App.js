@@ -24,13 +24,12 @@ import RegistrationActivity from './src/screens/RegistrationActivity';
 import HomeActivity from './src/screens/HomeActivity';
 import GeofenceActivity from './src/screens/GeofenceActivity';
 import LiveLocationActivity from './src/screens/LiveLocationActivity';
-import GeofenceActivity_2 from './src/screens/GeofenceActivity_2';
 import GeofenceActivity_3 from './src/screens/GeofenceActivity_3';
 
 
 
 import PushNotification from 'react-native-push-notification'
-import GeofenceActivity_4 from './src/screens/GeofenceActivity_4';
+
 
 
 

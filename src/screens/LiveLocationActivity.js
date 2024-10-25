@@ -44,14 +44,23 @@ const LiveLocationActivity = () => {
 
     let res = await AsyncStorage.getItem('user')
     res = await JSON.parse(res);
+    console.log("Live Location Activity :: fetch Locations :: user data", res);
 
-    setCurrentUser(res.displayName);
+    if (typeof res.displayName !== 'string') {
+      console.log('Unexpected data format: ', res.displayName);
+    } else {
+      setCurrentUser(res.displayName);
+    }
+    
+
+    //setCurrentUser(res.displayName);
 
     database()
       .ref('/locations')
       .once('value')
       .then(snapshot => {
         const locationData = snapshot.val();
+        console.log('Live Location Activity :: Fetch Location :: Location data structure: ', locationData);
         const names = Object.keys(locationData);
         setLocations(locationData); // Store the data in state
         const familyMembers = names.map(name => ({
